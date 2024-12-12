@@ -1,76 +1,112 @@
-import CrossIcon from "./components/icons/CrossIcon";
-import MoonIcon from "./components/icons/MoonIcon";
+import { useEffect, useState } from "react";
+import Header from "./components/Header";
+import TodoComputed from "./components/TodoComputed";
+import TodoCreate from "./components/TodoCreate";
+import TodoFilter from "./components/TodoFilter";
+import TodoList from "./components/TodoList";
+
+// const initialStateTodos = [
+//   {
+//     id: 1,
+//     title: "Go to the gym",
+//     completed: true,
+//   },
+//   {
+//     id: 2,
+//     title: "Go to the school",
+//     completed: true,
+//   },
+//   {
+//     id: 3,
+//     title: "Go to the yoga",
+//     completed: false,
+//   },
+// ];
+
+//Extrae los todos del localStorage, pero si falla el proceso, se almancena un arreglo vacío
+const initialStateTodos = JSON.parse(localStorage.getItem("todos")) || [];
 
 const App = () => {
-  return (
-    <div className="min-h-screen bg-gray-300 bg-[url('./assets/images/bg-mobile-light.jpg')] bg-contain bg-no-repeat">
-      <header className="max-auto container px-4 pt-8">
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-semibold uppercase tracking-[0.3em] text-white">
-            TODO
-          </h1>
-          <button>
-            <MoonIcon className="fill-red-400" />
-          </button>
-        </div>
-        <form
-          action=""
-          className="mt-8 flex items-center gap-4 overflow-hidden rounded-md bg-white px-4 py-4"
-        >
-          <span className="inline-block h-5 w-5 rounded-full border-2"></span>
-          <input
-            type="text"
-            placeholder="Create a new todo..."
-            className="w-full text-gray-400 outline-none"
-          />
-        </form>
-      </header>
+  const [todos, setTodos] = useState(initialStateTodos);
 
-      <main className="max-auto container mt-8 px-4">
-        <div className="rounded-md bg-white [&>article]:p-4">
-          <article className="flex gap-4 border-b border-b-gray-400">
-            <button className="inline-block h-5 w-5 flex-none rounded-full border-2"></button>
-            <p className="grow text-gray-600">
-              Completa el curso de JavaScript
-            </p>
-            <button>
-              <CrossIcon />
-            </button>
-          </article>
-          <article className="flex gap-4 border-b border-b-gray-400">
-            <button className="inline-block h-5 w-5 flex-none rounded-full border-2"></button>
-            <p className="grow text-gray-600">
-              Completa el curso de JavaScript
-            </p>
-            <button>
-              <CrossIcon />
-            </button>
-          </article>
-          <article className="flex gap-4 border-b border-b-gray-400">
-            <button className="inline-block h-5 w-5 flex-none rounded-full border-2"></button>
-            <p className="grow text-gray-600">
-              Completa el curso de JavaScript
-            </p>
-            <button>
-              <CrossIcon />
-            </button>
-          </article>
-          <section className="flex justify-between px-4 py-4">
-            <span className="text-gray-400"> 5 items left</span>
-            <button className="flex-none text-gray-400">clear completed</button>
-          </section>
-        </div>
+  //Cuando un todo le suceda algo, esta función se ejecutará
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  // Crear el todo
+  const createTodo = (title) => {
+    const newTodo = {
+      id: Date.now(),
+      title,
+      completed: false,
+    };
+    //Ingresar el todo en el arreglo
+    setTodos([...todos, newTodo]);
+  };
+
+  const removeTodo = (id) => {
+    setTodos(todos.filter((todo) => todo.id !== id));
+  };
+
+  const updateTodo = (id) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
+      ),
+    );
+  };
+
+  const clearCompleted = () => {
+    setTodos(todos.filter((todo) => !todo.completed));
+  };
+
+  const [filter, setFilter] = useState("all"); //Declarando el useState, para el filtro
+
+  const changeFilter = (filter) => setFilter(filter); //Cambia el estado del filtro
+
+  const filterTodos = () => {
+    //Filtra los todos, según la opción que selecciones
+    switch (filter) {
+      case "all":
+        return todos;
+      case "active":
+        return todos.filter((todo) => !todo.completed);
+      case "completed":
+        return todos.filter((todo) => todo.completed);
+      default:
+        return todos;
+    }
+  };
+
+  const computedItemsLeft = todos.filter((todo) => !todo.completed).length;
+
+  return (
+    <div className="min-h-screen bg-gray-300 bg-[url('./assets/images/bg-mobile-light.jpg')] bg-contain bg-no-repeat transition-all duration-1000 md:bg-[url('./assets/images/bg-desktop-light.jpg')] dark:bg-gray-900 dark:bg-[url('./assets/images/bg-mobile-dark.jpg')] md:dark:bg-[url('./assets/images/bg-desktop-dark.jpg')]">
+      <Header />
+
+      <main className="container mx-auto mt-8 px-4 md:max-w-xl">
+        <TodoCreate createTodo={createTodo} />
+
+        <TodoList
+          todos={filterTodos()}
+          removeTodo={removeTodo}
+          updateTodo={updateTodo}
+        />
+
+        <TodoComputed
+          computedItemsLeft={computedItemsLeft}
+          clearCompleted={clearCompleted}
+        />
+
+        <TodoFilter changeFilter={changeFilter} filter={filter} />
+
+        {/* TodoFilter */}
       </main>
 
-      <section className="container mx-auto mt-8 px-4">
-        <div className="flex justify-center gap-4 rounded-md bg-white p-4">
-          <button className="text-blue-600">All</button>
-          <button className="hover:text-blue-600">Active</button>
-          <button className="hover:text-blue-600">Completed</button>
-        </div>
-      </section>
-
-      <p className="mt-8 text-center">drag and drop to reorder list</p>
+      <footer className="mt-8 text-center dark:text-gray-300">
+        Drag and drop to reorder list
+      </footer>
     </div>
   );
 };
